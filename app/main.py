@@ -1,15 +1,14 @@
 
 import os
 import joblib
-import numpy as np
 
 from fastapi import FastAPI, HTTPException
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 from pydantic import BaseModel
-from fastapi.testclient import TestClient
 
-
+load_dotenv()
+ml_models ={}
 
 
 
@@ -20,9 +19,7 @@ class IrisData(BaseModel):
     petal_width: float
 
 
-load_dotenv()
-#  Global dictionary to hold the models.
-ml_models ={}
+
 def load_model(path: str):
     model = None
     with open(path, "rb") as f:
@@ -49,6 +46,11 @@ app = FastAPI(lifespan=lifespan)
 async def root():
     return {"message": "Models loaded and FastAPI is ready!"}
 
+# Health check endpoint
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy"}
+
 @app.get("/models")
 async def list_models():
     # Return the list of available models' names
@@ -57,7 +59,12 @@ async def list_models():
 
 @app.post("/predict/{model_name}")
 async def predict(model_name: str, iris: IrisData):
-    input_data = np.array([[iris.sepal_length, iris.sepal_width, iris.petal_length, iris.petal_width]])
+    input_data = [
+        [iris.sepal_length, 
+         iris.sepal_width, 
+         iris.petal_length, 
+         iris.petal_width]
+         ]
 
     # input_data = [[iris.sepal_length, iris.sepal_width, iris.petal_length, iris.petal_width]]
     
